@@ -3,6 +3,8 @@ class RecipeCard extends HTMLElement {
     // Part 1 Expose - TODO
 
     // You'll want to attach the shadow DOM here
+    super();
+    this.shadow = this.attatchShadow({mode:'open'});
   }
 
   set data(data) {
@@ -100,6 +102,71 @@ class RecipeCard extends HTMLElement {
     // created in the constructor()
 
     // Part 1 Expose - TODO
+    var pic = document.createElement('img');
+    Image.setAttribute('src',searchForKey(data,"thumbnailUrl"));
+
+    let rpeLink = document.createElement('a');
+    rpeLink.href = getUrl(data);
+    rpeLink.textContent=searchForKey(data,'headline');
+
+    let rpeName = document.createElement('p');
+    rpeName.appendChild(rpeLink);
+    rpeName.setAttribute('class','title');
+    card.appendChild(rpeName);
+
+    let org = document.createElement('p');
+    org.textContent=getOrganization(data);
+    org.setAttribute('class','organization');
+    card.appendChild(org);
+
+    let review = document.createElement('div');
+    let rate1 = document.createElement('span');
+    let ratePic = document.createElement('img');
+    let rate2 = document.createElement('span');
+    let score = searchForKey(data,'ratingValue');
+
+    if(score != null){
+      rate1.textContent = score;
+      rate2.textContent = '('+ searchForKey(data, 'ratingCount') + ')';
+      if(score >= 4.5){
+        ratePic.src = "assets/images/icons/5-star.svg";
+      }
+      else if(score >= 3.5){
+        ratePic.src = "assets/images/icons/4-star.svg";
+      }
+      else if(score >= 2.5){
+        ratePic.src = "assets/images/icons/3-star.svg";
+      }
+      else if(score >= 1.5){
+        ratePic.src = "assets/images/icons/2-star.svg";
+      }
+      else if(score >= 0.5){
+        ratePic.src = "assets/images/icons/1-star.svg";
+      }
+      else{
+        ratePic.src = "assets/image/icons/0-star.svg";
+      }
+      review.setAttribute('class','rating');
+      review.appendChild(rate1);
+      review.appendChild(ratePic);
+      review.appendChild(rate2);
+      card.appendChild(review);
+    }
+    else{
+      rate1.textContent = 'No Reviews';
+      review.appendChild(rate1);
+      review.setAttribute('class','rating');
+      card.appendChild(review);
+    }
+
+    let time = document.createElement('time');
+    time.textContent = convertTime(searchForKey(data,'totalTime'));
+    card.appendChild(time);
+
+    let ingredients = document.createElement('p');
+    ingredients.textContent = createIngredientList(searchForKey(data,'recipeIngredient'));
+    ingredients.setAttribute('class','ingredients');
+    card.appendChild(ingredients);
   }
 }
 
