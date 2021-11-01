@@ -4,7 +4,7 @@ class RecipeCard extends HTMLElement {
 
     // You'll want to attach the shadow DOM here
     super();
-    this.shadow = this.attatchShadow({mode:'open'});
+    this.attatchShadow({mode: 'open'});
   }
 
   set data(data) {
@@ -102,72 +102,114 @@ class RecipeCard extends HTMLElement {
     // created in the constructor()
 
     // Part 1 Expose - TODO
-    var pic = document.createElement('img');
-    Image.setAttribute('src',searchForKey(data,"thumbnailUrl"));
+    const recipe = getRecipe(data);
 
-    let rpeLink = document.createElement('a');
-    rpeLink.href = getUrl(data);
-    rpeLink.textContent=searchForKey(data,'headline');
+    const pic = document.createElement('img')
+    card.appendChild(pic)
+    const site = recipe.image.url ? recipe.image.url : recipe.image[0]
+    pic.setAttribute('src',site)
+    pic.setAttribute('alt', recipe.name)
 
-    let rpeName = document.createElement('p');
-    rpeName.appendChild(rpeLink);
-    rpeName.setAttribute('class','title');
-    card.appendChild(rpeName);
+    const rpeName = document.createElement('p')
+    card.appendChild(rpeName)
+    rpeName.setAttribute('class','title')
 
-    let org = document.createElement('p');
-    org.textContent=getOrganization(data);
-    org.setAttribute('class','organization');
-    card.appendChild(org);
+    const rpeLink = document.createElement('a')
+    rpeName.appendChild(rpeLink)
+    rpeLink.setAttribute('href',getUrl(data))
+    rpeLink.innerHTML = recipe.name
 
-    let review = document.createElement('div');
-    let rate1 = document.createElement('span');
-    let ratePic = document.createElement('img');
-    let rate2 = document.createElement('span');
-    let score = searchForKey(data,'ratingValue');
+    const org = document.createElement('p')
+    card.appendChild(org)
+    org.setAttribute('class','organization')
+    org.innerHTML = getOrganization(data)
 
-    if(score != null){
-      rate1.textContent = score;
-      rate2.textContent = '('+ searchForKey(data, 'ratingCount') + ')';
-      if(score >= 4.5){
-        ratePic.src = "assets/images/icons/5-star.svg";
+    const review = document.createElement('div')
+    card.appendChild(review)
+    review.setAttribute('class','rating')
+
+    if(recipe.aggregateRating){
+      const newSpan = document.createElement('span')
+      review.appendChild(newSpan)
+      newSpan.innerHTML = parseFloat(recipe.aggregateRating.ratingValue).toFixed(2)
+
+      const rateIcon = document.createElement('img')
+      review.appendChild(rateIcon)
+      if(recipe.aggregateRating.ratingValue >= 4.5){
+        rateIcon.setAttribute('src','assets/images/icons/5-star.svg')
+        rateIcon.setAttribute('alt','5-stars')
       }
-      else if(score >= 3.5){
-        ratePic.src = "assets/images/icons/4-star.svg";
+      else if(recipe.aggregateRating.ratingValue >= 3.5){
+        rateIcon.setAttribute('src','assets/images/icons/4-star.svg')
+        rateIcon.setAttribute('alt','4-stars')
       }
-      else if(score >= 2.5){
-        ratePic.src = "assets/images/icons/3-star.svg";
+      else if(recipe.aggregateRating.ratingValue >= 2.5){
+        rateIcon.setAttribute('src','assets/images/icons/3-star.svg')
+        rateIcon.setAttribute('alt','3-stars')
       }
-      else if(score >= 1.5){
-        ratePic.src = "assets/images/icons/2-star.svg";
+      else if(recipe.aggregateRating.ratingValue >= 1.5){
+        rateIcon.setAttribute('src','assets/images/icons/2-star.svg')
+        rateIcon.setAttribute('alt','2-stars')
       }
-      else if(score >= 0.5){
-        ratePic.src = "assets/images/icons/1-star.svg";
+      else if(recipe.aggregateRating.ratingValue >= 0.5){
+        rateIcon.setAttribute('src','assets/images/icons/1-star')
+        rateIcon.setAttribute('alt','1-stars')
       }
       else{
-        ratePic.src = "assets/image/icons/0-star.svg";
+        rateIcon.setAttribute('src','assets/images/icons/0-star')
+        rateIcon.setAttribute('alt','0-stars')
       }
-      review.setAttribute('class','rating');
-      review.appendChild(rate1);
-      review.appendChild(ratePic);
-      review.appendChild(rate2);
-      card.appendChild(review);
+
+      const newSpan1 = document.createElement('span')
+      review.appendChild(newSpan1)
+      if(recipe.aggregateRating.reviewContent){
+        newSpan1.innerHTML = '(' + recipe.aggregateRating.reviewCount + ')'
+      }
+      else if(recipe.aggregateRating.ratingCount){
+        newSpan1.innerHTML = '(' + recipe.aggregateRating.rationgCount + ')'
+      }
     }
     else{
-      rate1.textContent = 'No Reviews';
-      review.appendChild(rate1);
-      review.setAttribute('class','rating');
-      card.appendChild(review);
+      const newSpan = document.createElement('span');
+      review.appendChild(newSpan)
+      newSpan.innerHTML = 'No Reviews'
     }
 
-    let time = document.createElement('time');
-    time.textContent = convertTime(searchForKey(data,'totalTime'));
-    card.appendChild(time);
+    const newTime = document.createElement('time');
+    card.appendChild(newTime)
+    if(recipe.totalTime){
+      newTime.innerHTML = convertTime(recipe.totalTime)
+    }
+    else if(recipe.cookTime){
+      newTime.innerHTML = convertTime(recipe.cookTime)
+    }
 
-    let ingredients = document.createElement('p');
-    ingredients.textContent = createIngredientList(searchForKey(data,'recipeIngredient'));
-    ingredients.setAttribute('class','ingredients');
-    card.appendChild(ingredients);
+    const ingredients = document.createElement('p')
+    card.appendChild(ingredients)
+    ingredients.setAttribute('class','ingredients')
+    ingredients.innerHTML = createIngredientList(recipe.recipeIngredient)
+    this.shadowRoot.appendChild(card)
+    this.shadowRoot.appendChild(styleElem)
   }
+}
+
+function getRecipe(data) {
+  if (data['@type'] == 'Recipe'){
+    return data;
+  } 
+  if (data['@graph']) {
+    for (let i = 0; i < data['@graph'].length; i++) {
+      if (data['@graph'][i]['@type'] == 'Recipe') {
+        return data['@graph'][i]
+      }
+    }
+  };
+  for (let i = 0; i < data.length; i++) {
+    if (data[i]['@type'] == 'Recipe') {
+      return data[i]
+    }
+  }
+  return null;
 }
 
 
